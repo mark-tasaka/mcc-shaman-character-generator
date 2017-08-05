@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mutant Crawl Classics Shaman Character Generator</title>
+ 
+	<meta charset="UTF-8">
+	<meta name="description" content="Mutant Crawl Classics Shaman Character Generator. Goodman Games.">
+	<meta name="keywords" content="Mutant Crawl Classics, Jim Wampler, Goodman Games,HTML5,CSS,JavaScript">
+	<meta name="author" content="Mark Tasaka 2017">
+		
+
+	<link rel="stylesheet" type="text/css" href="css/mcc_shaman.css">
+</head>
+<body>
+	
+
+  <img id="character_sheet"/>
+   <section>
+    	<p id="name"></p>
+           
+		<p id="profession"></p>
+		<span id="strength"></span> <span id="strengthMod"></span>
+		<span id="agility"></span>  <span id="agilityMod"></span>
+           
+		<span id="stamina"></span>  <span id="staminaMod"></span>
+		<span id="personality"></span> <span id="personalityMod"></span>
+		<span id="intelligence"></span> <span id="intelligenceMod"></span>
+		<span id="luck"></span> <span id="luckMod"></span>
+		  
+    
+		   
+		<p id="birthAugur"><span id="luckySign"></span>: <span id="luckyRoll"></span> (<span id="LuckySignBonus"></span>)</p>
+           
+        <span id="baseAC"></span>
+        <span id="level"></span>
+        <span id="title"></span>
+       
+      
+           
+		<span id="hitPoints"></span> 
+        
+        
+        <span id="ref"></span>
+        <span id="fort"></span>
+        <span id="will"></span>
+		
+       
+        <span id="init"></span>
+		<span id="melee"></span>
+        <span id="range"></span>
+		<span id="meleeDamage"></span>
+        <span id="rangeDamage"></span>
+           
+
+        <span id="fumbleDie"></span>
+           <span id="speed"></span>
+           
+		<span id="critDie"></span>
+		<span id="critTable"></span>
+           
+
+        <span id="actionDice">1d2</span>
+           
+           <span id="artifactCheck"></span>
+           <span id="maxTech"></span>
+       
+        <span id="maxWetware"></span>
+		   <span id="dieRollMethod"></span>
+       
+       <div id="languageGroup">
+       <span id="languages"></span>
+        <span id="additionalLanguages"></span>
+           </div>
+	    
+	   	   
+	</section>
+	
+
+		
+  <script>
+	  
+	  /*
+	  rollDice (numberOfSides, numberOfDiceRolled, numberOfDiceRemoved, baseValue)
+	  
+	  numberOfSides - represents how many sides that they die has (ie. d4, d5, d6)
+	  
+	  numberOfDiceRolled - represents the number of dice rolled
+	  
+	  numberOfDiceRemoved - represents the number of dice removed (ie. roll 4 d6 and drop the lowest). The die/dice with the lowest values will always be removed.
+	  
+	  baseValue - represents the base value that it added to the die rolls.  For instance, a base value of 6 is added to the rolls of 2D6, which is represented as 2D6+6 in game mechanics.
+	  */
+	  	function rollDice(numberOfSides, numberOfDiceRolled, numberOfDiceRemoved, baseValue) {
+		
+		if(numberOfSides === undefined || typeof numberOfSides !== 'number'||numberOfSides <=2 || numberOfSides >=30){
+			numberOfSides = 6;
+		}
+		
+		if(numberOfDiceRolled < 0){
+			numberOfDiceRolled =2;
+		}
+		
+		if(numberOfDiceRemoved === undefined || typeof numberOfDiceRemoved !== 'number'||numberOfDiceRemoved >= numberOfDiceRolled){
+			numberOfDiceRemoved =0;
+		}
+		
+		if(baseValue === undefined || typeof baseValue !== 'number'||baseValue < 0){
+			baseValue = 0;
+		}
+		
+		var numbers = [];
+		
+
+		for(var i = 0; i < numberOfDiceRolled; i++){
+			numbers[i] = Math.floor((Math.random() * 6) + 1);
+		}
+		
+        numbers.sort();
+        
+		var sum = baseValue;
+			
+		for(var i = numberOfDiceRemoved; i < numberOfDiceRolled; i++){
+			sum += numbers[i];
+		}
+			
+		return sum ;
+	}
+      
+      
+      
+      
+	  
+	/*
+	 Character() - Shaman Character Constructor
+	*/
+	function Character() {
+	
+    var strength = rollDice(6, 4, 1, 0);
+    var agility = rollDice(6, 4, 1, 0);
+    var stamina = rollDice(6, 4, 1, 0);
+    var	personality = rollDice(6, 4, 1, 0);
+    var	intelligence = rollDice(6, 4, 1, 0);
+    var	luck = rollDice(6, 4, 1, 0);
+	var	profession = getProfession();
+	var birthAugur = getLuckySign();
+	var strengthModifier = getStrengthModifier(strength);
+	var staminaModifier = getStaminaModifier(stamina);
+	var agilityModifier = getAgilityModifier(agility);
+	var personalityModifier = getPersonalityModifier(personality);
+	var intelligenceModifier = getIntelligenceModifier(intelligence);
+	var luckModifier = getLuckModifier(luck);
+    var maxTechLevel = getMaxTechLevel(intelligence);
+    var bonusLanguages = fnAddLanguages(intelligenceModifier, birthAugur, luckModifier);
+	var baseAC = getBaseArmourClass(agilityModifier)  + adjustAC(birthAugur, getLuckModifier(luck));
+    var shaman = getShaman();
+		
+		var shamanCharacter = {
+			"name": "",
+			"strength": strength,
+			"agility": agility,
+			"stamina": stamina,
+			"personality": personality,
+			"intelligence": intelligence,
+			"luck": luck,
+			"strengthModifier": strengthModifier,
+			"agilityModifier": agilityModifier,
+			"staminaModifier": staminaModifier,
+			"personalityModifier": personalityModifier,
+			"intelligenceModifier": intelligenceModifier,
+			"luckModifier":  luckModifier,
+			"profession":  profession.role,
+			"luckySign": birthAugur.luckySign,
+			"luckyRoll": birthAugur.luckyRoll,
+			"luckySignBonus": getLuckModifier(luck),
+            "level": shaman.level,
+            "title": shaman.title,
+			"hitPoints": hitPoints (shaman, staminaModifier, hitPointAdjustPerLevel(luckySign, luckModifier)),
+			"ref": shaman.ref + agilityModifier + adjustRef(birthAugur, luckModifier),
+			"fort": shaman.fort + staminaModifier + adjustFort(birthAugur,luckModifier),
+			"will": shaman.will + personalityModifier + adjustWill(birthAugur, luckModifier),
+			"init": agilityModifier + adjustInit(birthAugur, luckModifier),
+			"melee": shaman.attackBonus + strengthModifier + meleeAdjust(birthAugur, getLuckModifier(luck)),
+            "meleeDamageBonus": strengthModifier + adjustMeleeDamage(birthAugur, getLuckModifier(luck)),
+			"range": shaman.attackBonus + agilityModifier + rangeAdjust(birthAugur, getLuckModifier(luck)),
+            "rangeDamageBonus": agilityModifier + adjustRangeDamage(birthAugur, getLuckModifier(luck)),
+			"speed": 30 + addLuckToSpeed(birthAugur, getLuckModifier(luck)) + "'",
+            "fumbleDie": "1d4" + addSign(adjustFumble (birthAugur, getLuckModifier(luck))),
+			"critDie": shaman.critDie + "" + addSign(adjustCrit(birthAugur, getLuckModifier(luck))),
+			"critTable": shaman.critTable,
+            "actionDice": shaman.actionDice,
+            "artifactCheck": "1d20" + "" + addSign(intelligenceModifier + shaman.artifactCheckBonus),
+            "techLevel": maxTechLevel,
+            "maxWetWareLevel": shaman.maxWetware,
+            "languages": "Nu-Speak", 
+            "addLanguages": bonusLanguages,
+            "acNoArmoured": baseArmourClass,
+			"dieRollMethod": "Ability Scores: 4d6, drop the lowest"
+			
+		
+			
+
+		};
+	    if(shamanCharacter.hitPoints <= 0 ){
+			shamanCharacter.hitPoints = 1;
+		}
+		return shamanCharacter;
+	  
+	  }
+	  
+
+
+    /*
+     getStrengthModifier(strength) - returns the Strength Modifier, which is based on the Strength Score
+    */
+    function getStrengthModifier(strength){
+        if(strength === undefined || typeof strength !== 'number'|| strength <=2 || strength >=19){
+            //invalid
+            return -3;
+        }
+		if(strength >=4 && strength <=5){
+			return -2;
+		}
+		else if(strength >=6 && strength <=8){
+			return -1;
+		}
+		else if(strength >=9 && strength <=12){
+			return + 0;
+		}
+		else if(strength >=13 && strength <=15){
+			return + 1;
+		}	
+		else if(strength >=16 && strength <=17){
+			return + 2;
+		}		
+		else if(strength ==18){
+			return + 3;
+		}	
+		return -3;
+	}
+
+
+    /*
+    getAgilityModifier(agility) - returns the Agility Modifier, which is based on the Agility Score
+    */
+    function getAgilityModifier(agility){
+        if(agility === undefined || typeof agility !== 'number'|| agility <=2 || agility >=19){
+            //invalid
+            return -3;
+        }
+		if(agility >=4 && agility <=5){
+			return -2;
+		}
+		else if(agility >=6 && agility <=8){
+			return -1;
+		}
+		else if(agility >=9 && agility <=12){
+			return 0;
+		}
+		else if(agility >=13 && agility <=15){
+			return 1;
+		}	
+		else if(agility >=16 && agility <=17){
+			return 2;
+		}		
+		else if(agility ==18){
+			return 3;
+		}	
+		return -3;
+	}
+	  
+	/*
+    getStaminaModifier(stamina) - returns the Stamina Modifier, which is based on the Stamina Score
+    */
+	function getStaminaModifier(stamina){
+        if(stamina === undefined || typeof stamina !== 'number'|| stamina <=2 || stamina >=19){
+            //invalid
+            return -3;
+        }
+		if(stamina >=4 && stamina <=5){
+			return -2;
+		}
+		else if(stamina >=6 && stamina <=8){
+			return -1;
+		}
+		else if(stamina >=9 && stamina <=12){
+			return + 0;
+		}
+		else if(stamina >=13 && stamina <=15){
+			return + 1;
+		}	
+		else if(stamina >=16 && stamina <=17){
+			return + 2;
+		}		
+		else if(stamina ==18){
+			return + 3;
+		}	
+		return -3;
+	}
+
+    /*
+    getPersonalityModifier(personality) - returns the Personality Modifier, which is based on the Personality Score
+    */
+	function getPersonalityModifier(personality){
+        if(personality === undefined || typeof personality !== 'number'|| personality <=2 || personality >=19){
+            //invalid
+            return -3;
+        }
+		if(personality >=4 && personality <=5){
+			return -2;
+		}
+		else if(personality >=6 && personality <=8){
+			return -1;
+		}
+		else if(personality >=9 && personality <=12){
+			return + 0;
+		}
+		else if(personality >=13 && personality <=15){
+			return + 1;
+		}	
+		else if(personality >=16 && personality <=17){
+			return + 2;
+		}		
+		else if(personality ==18){
+			return + 3;
+		}	
+		return -3;
+	}
+
+    /*
+    getIntelligenceModifier(intelligence) - returns the Intelligence Modifier, which is based on the Intelligence Score 
+    */
+	function getIntelligenceModifier(intelligence){
+        if(intelligence === undefined || typeof intelligence !== 'number'|| intelligence <=2 || intelligence >=19){
+            //invalid
+            return -3;
+        }
+		if(intelligence >=4 && intelligence <=5){
+			return -2;
+		}
+		else if(intelligence >=6 && intelligence <=8){
+			return -1;
+		}
+		else if(intelligence >=9 && intelligence <=12){
+			return + 0;
+		}
+		else if(intelligence >=13 && intelligence <=15){
+			return + 1;
+		}	
+		else if(intelligence >=16 && intelligence <=17){
+			return + 2;
+		}		
+		else if(intelligence ==18){
+			return + 3;
+		}	
+		return -3;
+	}
+
+    /*
+    getLuckModifier(luck) - returns the luck Modifier, which is based on the luck Score
+    */
+    function getLuckModifier(luck){
+        if(luck === undefined || typeof luck !== 'number'|| luck <=2 || luck >=19){
+            //invalid
+            return -3;
+        }
+		if(luck >=4 && luck <=5){
+			return -2;
+		}
+		else if(luck >=6 && luck <=8){
+			return -1;
+		}
+		else if(luck >=9 && luck <=12){
+			return + 0;
+		}
+		else if(luck >=13 && luck <=15){
+			return + 1;
+		}	
+		else if(luck >=16 && luck <=17){
+			return + 2;
+		}		
+		else if(luck ==18){
+			return + 3;
+		}	
+		return -3;
+	}
+      
+      
+
+
+
+
+/*	  
+  getprofession() - returns the Randomly Generated profession
+*/
+function getProfession(){
+	var profession = [
+        
+        {"role": "Hunter", "weapon": "Wood spear<br />", "damage": "1d5<br />", "equipment": ""},
+        {"role": "Gatherer", "weapon": "", "damage": "", "equipment": "Large leather sack<br />"}
+        
+		];
+	
+		return profession[Math.floor(Math.random() * 2)]; 
+		
+}
+
+/*	  
+getLuckySign() - returns a randomly generated Lucky Sign 
+*/
+function getLuckySign(){
+    var luckySign = [
+        {"luckySign": "Nuclear Winter", "luckyRoll": "All attack rolls"},
+        {"luckySign": "The Roxen", "luckyRoll": "All melee attack rolls"},
+        {"luckySign": "The Triffid", "luckyRoll": "Missle fire attack rolls"},
+        {"luckySign": "The Beast", "luckyRoll": "Unarmed attack rolls"},
+        {"luckySign": "The Millisteed", "luckyRoll": "Mounted attack rolls"},
+        {"luckySign": "The Apocalypse", "luckyRoll": "All damage rolls"},
+        {"luckySign": "Ragnarok", "luckyRoll": "Melee damage rolls"},
+        {"luckySign": "Revelations", "luckyRoll": "Missle damage rolls"},
+        {"luckySign": "The Hunter", "luckyRoll": "Attack & damage rolls 0-level starting weapons"},
+        {"luckySign": "The Gatherer", "luckyRoll": "Stealth/hiding rolls"},
+        {"luckySign": "The Outsider", "luckyRoll": "Find/disable traps"},
+        {"luckySign": "The Sensor", "luckyRoll": "Find secret doors"},
+        {"luckySign": "The Genomorph", "luckyRoll": "Mutation checks"},
+        {"luckySign": "The Alpha Striker", "luckyRoll": "Mutation damage rolls"},
+        {"luckySign": "The Programmer", "luckyRoll": "AI recognition rolls"},
+        {"luckySign": "The Hypospray", "luckyRoll": "Healing rolls"},
+        {"luckySign": "The Survivor", "luckyRoll": "All Saving throws"},
+        {"luckySign": "The Multitool", "luckyRoll": "Escape traps"},
+        {"luckySign": "The Healer", "luckyRoll": "Saving throws against poison"},
+        {"luckySign": "The Scientist", "luckyRoll": "Reflex saving throws"},
+        {"luckySign": "The Glow", "luckyRoll": "Fortitude saving throws"},
+        {"luckySign": "The Esper", "luckyRoll": "Willpower saving throws"},
+        {"luckySign": "The Bunker", "luckyRoll": "Armour class"},
+        {"luckySign": "The CPU", "luckyRoll": "Initiative"},
+        {"luckySign": "The Ecobot", "luckyRoll": "Hits points/each level"},
+        {"luckySign": "The War-Bot", "luckyRoll": "Critical hit tables (double luck mod)"},
+        {"luckySign": "The Unchanging", "luckyRoll": "Defect rolls"},
+        {"luckySign": "The Backup Disk", "luckyRoll": "Fumbles (double luck mod)"},
+        {"luckySign": "The Universal Translator", "luckyRoll": "Number of Languages"},
+        {"luckySign": "The Accelerant", "luckyRoll": "Speed"}
+    ];
+	
+     return luckySign[Math.floor(Math.random() * 30)]; 
+}
+      
+    /*getShaman() return the statistics for the Shaman per level*/  
+    function getShaman() {
+	var shaman = [
+        
+		{"level": 1,
+		 "title": "Acolyte",
+		 "actionDice": "1d20",
+		 "attackBonus": 0,
+		 "critDie": "1d6",
+		 "critTable": "I",
+		 "hd": 1,
+		 "ref": 1,
+		 "fort": 1,
+		 "will": 1,
+		 "artifactCheckBonus": 3,
+         "maxWetware": 1
+        },
+        
+		{"level": 2,
+		 "title": "Adept",
+		 "actionDice": "1d20",
+		 "attackBonus": 1,
+		 "critDie": "1d6",
+		 "critTable": "I",
+		 "hd": 2,
+		 "ref": 1,
+		 "fort": 1,
+		 "will": 1,
+		 "artifactCheckBonus": 4,
+         "maxWetware": 1
+        },
+        
+		{"level": 3,
+		 "title": "Shaman",
+		 "actionDice": "1d20",
+		 "attackBonus": 1,
+		 "critDie": "1d8",
+		 "critTable": "I",
+		 "hd": 3,
+		 "ref": 1,
+		 "fort": 1,
+		 "will": 2,
+		 "artifactCheckBonus": 5,
+         "maxWetware": 2
+        },
+        
+		{"level": 4,
+		 "title": "Seer-Shaman",
+		 "actionDice": "1d20",
+		 "attackBonus": 1,
+		 "critDie": "1d8",
+		 "critTable": "I",
+		 "hd": 4,
+		 "ref": 2,
+		 "fort": 1,
+		 "will": 2,
+		 "artifactCheckBonus": 6,
+         "maxWetware": 2
+        },
+                
+		{"level": 5,
+		 "title": "High-Shaman",
+		 "actionDice": "1d20+1d14",
+		 "attackBonus": 2,
+		 "critDie": "1d10",
+		 "critTable": "I",
+		 "hd": 5,
+		 "ref": 2,
+		 "fort": 1,
+		 "will": 3,
+		 "artifactCheckBonus": 7,
+         "maxWetware": 3
+        },
+               
+		{"level": 6,
+		 "title": "Shaman Supreme",
+		 "actionDice": "1d20+1d16",
+		 "attackBonus": 2,
+		 "critDie": "1d10",
+		 "critTable": "I",
+		 "hd": 6,
+		 "ref": 2,
+		 "fort": 2,
+		 "will": 4,
+		 "artifactCheckBonus": 8,
+         "maxWetware": 3
+        },
+        		
+        {"level": 7,
+		 "title": "Shaman Supreme",
+		 "actionDice": "1d20 (x2)",
+		 "attackBonus": 3,
+		 "critDie": "1d12",
+		 "critTable": "I",
+		 "hd": 7,
+		 "ref": 3,
+		 "fort": 2,
+		 "will": 4,
+		 "artifactCheckBonus": 9,
+         "maxWetware": 4
+        },
+                		
+        {"level": 8,
+		 "title": "Shaman Supreme",
+		 "actionDice": "1d20 (x2)",
+		 "attackBonus": 3,
+		 "critDie": "2d12",
+		 "critTable": "I",
+		 "hd": 8,
+		 "ref": 3,
+		 "fort": 2,
+		 "will": 5,
+		 "artifactCheckBonus": 10,
+         "maxWetware": 4
+        },
+                        		
+        {"level": 9,
+		 "title": "Shaman Supreme",
+		 "actionDice": "1d20 (x2)",
+		 "attackBonus": 4,
+		 "critDie": "2d14",
+		 "critTable": "I",
+		 "hd": 9,
+		 "ref": 3,
+		 "fort": 3,
+		 "will": 5,
+		 "artifactCheckBonus": 11,
+         "maxWetware": 5
+        },
+                
+        {"level": 10,
+		 "title": "Shaman Supreme",
+		 "actionDice": "1d20 (x3)",
+		 "attackBonus": 4,
+		 "critDie": "2d14",
+		 "critTable": "I",
+		 "hd": 10,
+		 "ref": 4,
+		 "fort": 3,
+		 "will": 6,
+		 "artifactCheckBonus": 12,
+         "maxWetware": 5
+        }
+		
+	];
+	
+	
+	return shaman[7]; 
+}
+
+      
+
+      /*additional languages*/
+   var fnAddLanguages = function(intelligenceModifier, luckySign, luckModifier) {
+          var bonusLanguages = intelligenceModifier;
+          var additionalLanguages ="";
+
+    if (luckySign.luckySign != undefined && luckySign.luckySign === "The Universal Translator"){
+          bonusLanguages += luckModifier;
+        }
+          if(bonusLanguages < 1){
+            additionalLanguages = "";
+        }
+        else if(bonusLanguages === 1){
+            additionalLanguages = " & " + bonusLanguages + " additional language";
+        }
+        else{
+            additionalLanguages = " & " + bonusLanguages + " additional languages";
+        }
+          return additionalLanguages;
+      }
+   
+
+      
+/* getMaxTechLevel() gets the maximum tech level based on Intelligence
+*/
+    
+      function getMaxTechLevel(intelligence) {
+          var techLevel = 0;
+          
+          if(intelligence >= 3 && intelligence <=7)
+              {
+                  techLevel = 1;
+              }
+          else if(intelligence >= 8 && intelligence <=9)
+              {
+                  techLevel = 2;
+              }
+          else if(intelligence >= 10 && intelligence <=11)
+              {
+                  techLevel = 3;
+              }
+          else if(intelligence >= 12 && intelligence <=14)
+              {
+                  techLevel = 4;
+              }
+          else if(intelligence >= 15 && intelligence <=17)
+              {
+                  techLevel = 5;
+              }
+          else if(intelligence >= 18 && intelligence <=23)
+              {
+                  techLevel = 6;
+              }
+          else{
+                techLevel = 7;
+          }
+          
+          return techLevel;
+      }
+      
+      
+	 	
+/*
+hitPointAdjustPerLevel (luckySign, luckModifier) - returns the additional/minus hit points
+the character received per level from their Stamina modifier and whether they have the Lucky Sign "The Ecobot".
+*/
+	  
+function hitPointAdjustPerLevel (luckySign, luckModifier) {
+   var adjust = 0;
+    if (luckySign != undefined && luckySign.luckySign === "The Ecobot"){
+        adjust = luckModifier;
+     }
+	return adjust;
+}
+
+/*
+ getBaseArmourClass(agilityModifier)- returns the base armour class of the character
+*/
+function getBaseArmourClass(agilityModifier){
+	var armourClass = 10;
+	baseArmourClass = armourClass + agilityModifier;
+	return baseArmourClass;
+}	  
+
+
+
+/*
+addModifierSign (modifier) adds a + sign to positive integers; use for ability modifiers, saving throws, etc.
+*/
+function addModifierSign (modifier) {
+	if(modifier >= 0 ) {
+		return "+" + modifier;
+	}
+	else {
+		return modifier;
+	}
+}
+	  
+
+
+/*
+meleeAdjust (luckySign, luckModifier) - adds bonus/penality to Melee attack based on whether the character possesses specific Lucky Signs
+*/
+function meleeAdjust (luckySign, luckModifier) {
+   var adjust = 0;
+    if (luckySign.luckySign != undefined && luckySign.luckySign === "Nuclear Winter"){
+        adjust = luckModifier;
+     }
+	else if (luckySign.luckySign != undefined && luckySign.luckySign === "The Roxen") {
+		adjust = luckModifier;
+	}
+	return adjust;
+}
+
+/*
+rangeAdjust (luckySign, luckModifier) - adds bonus/penality to Range attack based on whether the character possesses specific Lucky Signs
+*/	  
+function rangeAdjust (luckySign, luckModifier) {
+   var adjust = 0;
+    if (luckySign.luckySign != undefined && (luckySign.luckySign === "Nuclear Winter" || luckySign.luckySign === "The Triffid")){
+        adjust = luckModifier;
+     }
+	return adjust;
+}
+
+
+/*
+ addLuckToSpeed (luckySign, luckModifier) adds bonuses to the character's speed if they have a positive Luck Modifier and the Lucky Sign of The Accelerant
+*/
+function addLuckToSpeed (luckySign, luckModifier) {
+	var addSpeed = 0;
+	if (luckySign.luckySign != undefined && luckySign.luckySign === "The Accelerant" && luckModifier == 1){
+		addSpeed = 5;
+	}
+	else if (luckySign.luckySign != undefined && luckySign.luckySign === "The Accelerant" && luckModifier == 2){
+		addSpeed = 10;
+	}
+	else if (luckySign.luckySign != undefined && luckySign.luckySign === "The Accelerant" && luckModifier == 3){
+		addSpeed = 15;
+	}
+	return addSpeed;
+}
+
+
+
+/*
+adjustRef (luckySign, luckModifier) - add bonus/penality to Saving Throw based on Lucky Sign
+*/
+function adjustRef (luckySign, luckModifier) {
+   var adjust = 0;
+    if (luckySign.luckySign != undefined && (luckySign.luckySign === "The Survivor" || luckySign.luckySign === "The Scientist")){
+        adjust = luckModifier;
+     }
+	return adjust;
+}
+	 
+/*
+adjustFort (luckySign, luckModifier) - add bonus/penality to Saving Throw based on Lucky Sign
+*/
+function adjustFort (luckySign, luckModifier) {
+   var adjust = 0;
+    if (luckySign.luckySign != undefined && (luckySign.luckySign === "The Survivor" || luckySign.luckySign === "The Glow")){
+        adjust = luckModifier;
+     }
+	return adjust;
+}
+	  
+/*
+adjustWill (luckySign, luckModifier) - add bonus/penality to Saving Throw based on Lucky Sign
+*/
+function adjustWill (luckySign, luckModifier) {
+   var adjust = 0;
+    if (luckySign.luckySign != undefined && (luckySign.luckySign === "The Survivor" || luckySign.luckySign === "The Esper")){
+        adjust = luckModifier;
+     }
+	return adjust;
+}	 
+
+/*adjustMeleeDamage (luckySign, luckModifier) adds luck mod to melee damage rolls if character has specific Luck sign
+*/
+function adjustMeleeDamage (luckySign, luckModifier){          
+    var adjust = 0;        
+    if (luckySign.luckySign != undefined && (luckySign.luckySign === "The Apocalypse" || luckySign.luckySign === "Ragnarok")){
+        adjust = luckModifier;
+     }
+	return adjust;
+}
+
+      
+/*adjustRangeDamage (luckySign, luckModifier) adds luck mod to range damage rolls if character has specific Luck sign
+*/
+function adjustRangeDamage (luckySign, luckModifier){          
+    var adjust = 0;        
+    if (luckySign.luckySign != undefined && (luckySign.luckySign === "The Apocalypse" || luckySign.luckySign === "Revelations")){
+        adjust = luckModifier;
+     }
+	return adjust;
+}
+
+
+/*
+adjustInit (luckySign, luckModifier) - add bonus/penality to Initiative based on Lucky Sign
+*/
+function adjustInit (luckySign, luckModifier) {
+   var adjust = 0;
+    if (luckySign.luckySign != undefined && luckySign.luckySign === "The CPU"){
+        adjust = luckModifier;
+     }
+	return adjust;
+}	
+
+
+	  
+/*
+adjustAC (luckySign, luckModifier) - add bonus/penality to AC based on Lucky Sign
+*/
+function adjustAC (luckySign, luckModifier) {
+   var adjust = 0;
+    if (luckySign.luckySign != undefined && luckySign.luckySign === "The Bunker"){
+        adjust = luckModifier;
+     }
+	return adjust;
+}
+      
+
+/*
+adjustCrit (luckySign, luckModifier) - add bonus/penality to Crit based on Lucky Sign
+*/
+function adjustCrit (luckySign, luckModifier) {
+   var adjust = luckModifier * 1;
+    if (luckySign.luckySign != undefined && luckySign.luckySign === "The War-Bot"){
+        adjust = luckModifier * 2;
+     }
+	return adjust;
+}	
+	  
+/*
+adjustFumble (luckySign, luckModifier) - add bonus/penality to Fumble based on Lucky Sign
+*/
+function adjustFumble  (luckySign, luckModifier) {
+   var adjust = luckModifier * -1;
+    if (luckySign.luckySign != undefined && luckySign.luckySign === "The Backup Disk"){
+        adjust = luckModifier * -2;
+     }
+	return adjust;
+}	
+
+
+	  
+/*addSign (modifier) Adds a + sign to value if value is 1 or greater.  If value is 0, then a empty String "" is returned.
+*/
+function addSign (modifier) {
+	if(modifier > 0 ) {
+		return "+" + modifier;
+	}
+	else if(modifier === 0) {
+		return "";
+	}
+	else {
+		return modifier;
+	}
+}
+      
+      /*
+getHitsPoints (shaman, add1, add2) - retreives the number of hit points that the shaman will have based on their level (shaman), stamina modifier (add1) and Lucky Sign (add2).  Luck Modifer applies if Bountiful Harvest luck sign is present.
+*/
+function hitPoints (shaman, add1, add2) {
+	var hd = shaman.hd;
+	var level = shaman.level;
+	var hitPoints = 0;
+	var zeroLevelHitPoints = Math.floor((Math.random() * 4) + 1) + add1 + add2;
+	var hitPointsEachLevel = Math.floor((Math.random() * 4) + 1) + add1 + add2;
+	
+	if (level === 1) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel;
+		if (hitPoints <= 3) {
+			hitPoints = 4;
+		}
+	}	
+	else if (level === 2) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel;
+		if (hitPoints <= 5) {
+			hitPoints = 6;
+		}
+	}
+	else if (level === 3) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel;
+		if (hitPoints <= 8) {
+			hitPoints = 9;
+		}
+	}
+	else if (level === 4) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel;
+		if (hitPoints <= 10) {
+			hitPoints = 11;
+		}
+	}
+	else if (level === 5) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel
+		 + hitPointsEachLevel;
+		if (hitPoints <= 13) {
+			hitPoints = 14;
+		}
+	}
+	else if (level === 6) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel
+		 + hitPointsEachLevel + hitPointsEachLevel;
+		if (hitPoints <= 15) {
+			hitPoints = 16;
+		}
+	}
+	else if (level === 7) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel
+		 + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel;
+		if (hitPoints <= 17) {
+			hitPoints = 18;
+		}
+	}
+	else if (level === 8) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel
+		 + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel;
+		if (hitPoints <= 19) {
+			hitPoints = 20;
+		}
+	}
+	else if (level === 9) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel
+		 + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel;
+		if (hitPoints <= 21) {
+			hitPoints = 22;
+		}
+	}
+	else if (level === 10) {
+		hitPoints = zeroLevelHitPoints + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel
+		 + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel + hitPointsEachLevel;
+		if (hitPoints <= 23) {
+			hitPoints = 24;
+		}
+	}
+	return hitPoints;
+}	  
+
+	  	  
+	  
+  
+        var imgData = "images/shaman_character_sheet.png";
+        document.getElementById("character_sheet").src = imgData;
+
+	  var data = Character();
+		 
+      
+        document.getElementById("name").innerHTML = data.name;
+          
+          
+        document.getElementById("profession" ).innerHTML = data.profession;
+          
+	  
+        document.getElementById("strength" ).innerHTML = data.strength;
+        document.getElementById("strengthMod" ).innerHTML = addModifierSign(data.strengthModifier);
+	  
+        document.getElementById("agility" ).innerHTML = data.agility;
+        document.getElementById("agilityMod" ).innerHTML = addModifierSign(data.agilityModifier);
+          
+   
+	  
+        document.getElementById("stamina" ).innerHTML = data.stamina;
+	  	document.getElementById("staminaMod" ).innerHTML = addModifierSign(data.staminaModifier);
+	  
+        document.getElementById("personality" ).innerHTML = data.personality;
+        document.getElementById("personalityMod" ).innerHTML = addModifierSign(data.personalityModifier);
+	  
+        document.getElementById("intelligence" ).innerHTML = data.intelligence;
+        document.getElementById("intelligenceMod" ).innerHTML = addModifierSign(data.intelligenceModifier);
+	  
+        document.getElementById("luck" ).innerHTML = data.luck;
+        document.getElementById("luckMod" ).innerHTML = addModifierSign(data.luckModifier);
+          
+      
+       	document.getElementById("luckySign" ).innerHTML = data.luckySign;
+	    document.getElementById("luckyRoll" ).innerHTML = data.luckyRoll;
+	    document.getElementById("LuckySignBonus" ).innerHTML = addModifierSign(data.luckModifier);
+	 
+	    document.getElementById("baseAC" ).innerHTML = data.acNoArmoured;
+	    document.getElementById("level" ).innerHTML = data.level;
+	    document.getElementById("title" ).innerHTML = data.title;
+        
+        
+	    document.getElementById("hitPoints" ).innerHTML = data.hitPoints;
+	   
+	  	document.getElementById("ref" ).innerHTML = addModifierSign(data.ref); 
+	  	document.getElementById("fort" ).innerHTML = addModifierSign(data.fort); 
+	  	document.getElementById("will" ).innerHTML = addModifierSign(data.will);
+           
+    
+	  	document.getElementById("init" ).innerHTML = addModifierSign(data.init);
+	
+        document.getElementById("melee" ).innerHTML = addModifierSign(data.melee);
+	    document.getElementById("range" ).innerHTML = addModifierSign(data.range);
+      
+        document.getElementById("meleeDamage" ).innerHTML = addModifierSign(data.meleeDamageBonus);
+	    document.getElementById("rangeDamage" ).innerHTML = addModifierSign(data.rangeDamageBonus);
+      
+	    document.getElementById("fumbleDie" ).innerHTML = data.fumbleDie;
+	    document.getElementById("speed" ).innerHTML = data.speed;
+  
+          
+	    document.getElementById("critDie" ).innerHTML = data.critDie;
+	    document.getElementById("critTable" ).innerHTML = data.critTable;
+      
+	    document.getElementById("actionDice" ).innerHTML = data.actionDice;
+         
+      
+	    document.getElementById("artifactCheck" ).innerHTML = data.artifactCheck;
+	    document.getElementById("maxTech" ).innerHTML = data.techLevel;
+      
+	    document.getElementById("maxWetware" ).innerHTML = data.maxWetWareLevel;
+          
+	    document.getElementById("dieRollMethod" ).innerHTML = data.dieRollMethod;
+      
+	    document.getElementById("languages" ).innerHTML = data.languages;
+	    document.getElementById("additionalLanguages" ).innerHTML = data.addLanguages;
+	 
+  </script>
+		
+	
+    
+</body>
+</html>
